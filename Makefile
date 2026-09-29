@@ -1,5 +1,5 @@
 PY := .venv/bin/python
-LLM_MAX_USD ?= 150
+LLM_MAX_USD ?= 15
 
 .PHONY: setup data score score-llm-estimate spotcheck eval backtest report test dashboard live live-dry all
 
@@ -13,11 +13,14 @@ data:                     ## pull news + bars + calendar, dedupe, align entry ba
 score-llm-estimate:       ## count prompt tokens and project the LLM bill; no scoring
 	$(PY) -m src.score_llm --estimate
 
+batch-validate:           ## batch-score the single-call set and write the agreement table
+	$(PY) -m src.score_llm_batch --validate
+
 spotcheck:                ## score 50 random in-sample headlines and write reports/llm_spotcheck.md
 	$(PY) -m src.score_llm --window in --spotcheck 50
 
-score:                    ## all three models; the LLM stops at LLM_MAX_USD
-	$(PY) -m src.score_llm --window all --max-usd $(LLM_MAX_USD)
+score:                    ## all three models; LLM via Batches API, 20 events/request, refuses to submit above LLM_MAX_USD
+	$(PY) -m src.score_llm_batch --max-usd $(LLM_MAX_USD)
 	$(PY) -m src.score_finbert
 	$(PY) -m src.score_embed
 

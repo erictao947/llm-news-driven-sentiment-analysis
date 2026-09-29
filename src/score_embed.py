@@ -41,7 +41,7 @@ def main():
     groups = train.loc[mask, "entry_date"].astype(str).to_numpy()
 
     pipe = make_pipeline(StandardScaler(), LogisticRegression(max_iter=2000))
-    grid = GridSearchCV(pipe, {"logisticregression__C": np.logspace(-4, 0, 9)},
+    grid = GridSearchCV(pipe, {"logisticregression__C": np.logspace(-4, 2, 13)},
                         cv=GroupKFold(n_splits=5), scoring="roc_auc")
     grid.fit(X, y, groups=groups)
     print(f"embed logit: {mask.sum():,} in-sample training events, up-rate {y.mean():.3f}, "

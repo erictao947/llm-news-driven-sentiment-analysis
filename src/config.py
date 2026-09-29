@@ -53,7 +53,7 @@ SEED = 20250901
 LLM_MODEL = "claude-haiku-4-5"
 # USD per million tokens (Haiku 4.5 list price). Cache write = 1.25x, cache read = 0.1x input.
 LLM_PRICE = {"input": 1.00, "output": 5.00, "cache_write": 1.25, "cache_read": 0.10}
-PROMPT_VERSION = "v1"
+PROMPT_VERSION = "v2"
 
 MODELS = ["llm", "finbert", "embed", "random"]
 MODEL_LABELS = {"llm": "Claude Haiku 4.5", "finbert": "FinBERT",

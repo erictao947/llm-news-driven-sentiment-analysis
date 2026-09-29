@@ -1,0 +1,10 @@
+{
+  "articles": 26899,
+  "articles_in_universe": 26860,
+  "ticker_headlines_raw": 41334,
+  "dropped_near_duplicates": 48,
+  "events": 41286,
+  "events_insample": 10544,
+  "events_oos": 30742,
+  "multi_ticker_share": 0.5215811655282663
+}
