@@ -1,0 +1,13 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+data/*
+!data/sample/
+data/sample/*
+!data/sample/*.csv
+!data/sample/README.md
+.DS_Store
+reports/pg-*.png
+.pytest_cache/
