@@ -45,7 +45,7 @@ def sandbox(tmp_path_factory):
     ev = pd.DataFrame({"id": np.arange(n), "ticker": rng.choice(TICKERS, n), "ts": ts.tz_convert("UTC"),
                        "headline": [f"headline {i} about something" for i in range(n)], "source": "benzinga", "n_tickers": 1})
     ev["event_id"] = ev["id"].astype(str) + "_" + ev["ticker"]
-    ev["sample"] = np.where(ev["ts"].dt.tz_convert(C.TZ).dt.date.astype(str) <= C.INSAMPLE_END, "in", "oos")
+    ev["headline_window"] = np.where(ev["ts"].dt.tz_convert(C.TZ).dt.date.astype(str) <= C.INSAMPLE_END, "in", "oos")
     ev.to_parquet(C.INTERIM / "events.parquet", index=False)
     yield root
     mp.undo()
@@ -71,8 +71,8 @@ def test_full_pipeline(sandbox):
     pd.DataFrame([{"n_train": 100, "up_rate": 0.5, "best_C": 0.01, "cv_auc": 0.5}]).to_csv(C.TABLES / "embed_training.csv", index=False)
     (C.TABLES / "ingest_counts.json").write_text(json.dumps({
         "articles": 3000, "articles_in_universe": 3000, "ticker_headlines_raw": 3000, "dropped_near_duplicates": 0,
-        "events": 3000, "events_insample": int((ev["sample"] == "in").sum()),
-        "events_oos": int((ev["sample"] == "oos").sum()), "multi_ticker_share": 0.0}))
+        "events": 3000, "events_insample": int((ev["headline_window"] == "in").sum()),
+        "events_oos": int((ev["headline_window"] == "oos").sum()), "multi_ticker_share": 0.0}))
     pd.DataFrame([{"est_usd": 1.0, "calls": 3000}]).to_csv(C.REPORTS / "llm_cost_log.csv", index=False)
     (C.REPORTS / "notes_post_run.md").write_text("Synthetic run.")
     tpl = (C.ROOT / "reports" / "writeup_template.md").read_text()

@@ -162,18 +162,20 @@ def build_events(news=None):
     ev["event_id"] = ev["id"].astype(str) + "_" + ev["ticker"]
     n_raw = len(ev)
     ev = dedup(ev.reset_index(drop=True))
-    ev = ev[["event_id", "id", "ticker", "ts", "headline", "source", "n_tickers"]].sort_values("ts")
-    ev["sample"] = (ev["ts"].dt.tz_convert(C.TZ).dt.date.astype(str) <= C.INSAMPLE_END).map({True: "in", False: "oos"})
+    ev = ev[["event_id", "id", "ticker", "ts", "headline", "source", "n_tickers"]].sort_values("ts").copy()
+    # headline-date window, used only to pick headlines for prompt design; the evaluation sample is set in
+    # align.py from the realized entry date so returns never cross the in-sample boundary
+    ev["headline_window"] = (ev["ts"].dt.tz_convert(C.TZ).dt.date.astype(str) <= C.INSAMPLE_END).map({True: "in", False: "oos"})
     ev.to_parquet(C.INTERIM / "events.parquet", index=False)
     counts = {"articles": int(news["id"].nunique()),
               "articles_in_universe": int(ev["id"].nunique()),
               "ticker_headlines_raw": int(n_raw), "dropped_near_duplicates": int(n_raw - len(ev)),
-              "events": int(len(ev)), "events_insample": int((ev["sample"] == "in").sum()),
-              "events_oos": int((ev["sample"] == "oos").sum()),
+              "events": int(len(ev)), "events_insample": int((ev["headline_window"] == "in").sum()),
+              "events_oos": int((ev["headline_window"] == "oos").sum()),
               "multi_ticker_share": float((ev["n_tickers"] > 1).mean())}
     (C.TABLES / "ingest_counts.json").write_text(json.dumps(counts, indent=2))
     print(f"events: {n_raw:,} ticker-headlines, {n_raw - len(ev):,} dropped as near-duplicates, {len(ev):,} kept "
-          f"({(ev['sample'] == 'in').sum():,} in-sample, {(ev['sample'] == 'oos').sum():,} OOS)")
+          f"({(ev['headline_window'] == 'in').sum():,} in-sample, {(ev['headline_window'] == 'oos').sum():,} OOS by headline date)")
     return ev
 
 

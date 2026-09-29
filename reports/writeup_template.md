@@ -40,6 +40,8 @@ I test this on Benzinga headlines for 30 high-news-volume S&P 500 stocks from {{
 - *Embedding logit*: all-MiniLM-L6-v2 headline embeddings into an L2 logistic regression predicting the sign of the 30-minute excess return. It is trained on {{embed_n_train}} in-sample events with day-grouped cross-validation (CV AUC {{embed_cv_auc}}).
 - *Random sign*: a coin flip per event.
 
+**Sample split.** An event belongs to the in-sample or OOS window by the date its trade enters, not the date of the headline. A Friday-evening headline on the last in-sample weekend enters on the first OOS session, so it counts as OOS.
+
 **Evaluation.** The IC is the Spearman correlation between score and forward excess return, pooled over OOS events. Confidence intervals come from a block bootstrap that resamples trading days (2,000 replicates). Every replicate scores all models on the same days, which gives paired CIs for model differences.
 
 **Backtest.** One position per qualifying headline: long if the score is positive, short if negative, each at 1/10 of capital, with at most 10 open positions. The LLM trades when |sentiment| is at least 0.5 and confidence at least 0.6, which selects {{llm_trade_rate}} of in-sample events. Each baseline gets the |score| cutoff that trades the same fraction of in-sample events, so every model has the same trade budget. Costs per side are 5 bps plus half the spread, with the spread proxied by the median (high - low) / close over the 30 minute bars before entry. Sharpe is annualized from per-trade returns as the brief specifies. Because positions overlap, I also report a daily-PnL Sharpe.
@@ -64,7 +66,7 @@ Cells show the IC with its 95% CI. Haiku = Claude Haiku 4.5, Embed = MiniLM embe
 
 ![Cumulative net return. The dotted line is the LLM before costs.](figures/equity_curves.png)
 
-Primary configuration (LLM, 30-minute exit, 60-second delay): {{bt_n_trades}} trades, hit rate {{bt_hit_rate}}, {{bt_gross_bps}} bps gross and {{bt_net_bps}} bps net per trade after {{bt_cost_bps}} bps of round-trip cost. Per-trade Sharpe is {{bt_sharpe_trade_gross}} gross and {{bt_sharpe_trade_net}} net; daily-PnL Sharpe is {{bt_sharpe_daily_net}} net. Max drawdown is {{bt_max_drawdown_net}} of capital, and turnover is {{bt_turnover_per_day}}x capital per day.
+Primary configuration (LLM, 30-minute exit, 60-second delay): {{bt_n_trades}} trades, hit rate {{bt_hit_rate}}, {{bt_gross_bps}} bps gross and {{bt_net_bps}} bps net per trade after {{bt_cost_bps}} bps of round-trip cost. Per-trade Sharpe is {{bt_sharpe_trade_gross}} gross and {{bt_sharpe_trade_net}} net; daily-PnL Sharpe is {{bt_sharpe_daily_net}} net. Max drawdown is {{bt_max_drawdown_net}} of capital, measured on the additive (non-compounded) equity curve that fixed 1/10-capital slots imply, and turnover is {{bt_turnover_per_day}}x capital per day.
 
 {{table_bt}}
 

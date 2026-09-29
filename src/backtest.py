@@ -86,7 +86,7 @@ def summarize(trades, all_days, label):
     years = len(all_days) / 252
     w = 1 / C.MAX_CONCURRENT
     daily = trades.groupby("entry_date")[["gross", "net"]].sum().reindex(all_days, fill_value=0) * w
-    eq = daily.cumsum()
+    eq = daily.cumsum()  # additive: fixed 1/10-capital slots, no compounding
     dd = (eq["net"] - eq["net"].cummax()).min()
     out = {**label, "n_trades": n, "trades_per_day": n / len(all_days),
            "hit_rate": float((trades["gross"] > 0).mean()) if n else np.nan,
@@ -110,7 +110,7 @@ def main():
     print("thresholds (fit in-sample):", th)
 
     panels = {d: load_panel(delay=d) for d in C.LATENCY_GRID_S}
-    all_days = sorted(panels[C.ENTRY_DELAY_S]["entry_date"].unique())
+    all_days = sorted(set().union(*(set(p["entry_date"]) for p in panels.values())))
     summary, curves, cat_rows = [], [], []
 
     for model in C.MODELS:

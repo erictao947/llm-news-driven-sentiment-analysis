@@ -126,3 +126,23 @@ def test_latency_is_monotone(aligned):
     w = out.pivot(index="event_id", columns="delay_s", values="entry_ns").dropna()
     for a, b in zip(C.LATENCY_GRID_S[:-1], C.LATENCY_GRID_S[1:]):
         assert (w[b] >= w[a]).all()
+
+
+def test_sample_split_uses_entry_date_not_headline_date():
+    """A headline after the Nov 28 2025 half-day close enters Dec 1 (OOS) and must be tagged OOS."""
+    from src.align import assign_sample
+    days = [("2025-11-26", "16:00"), ("2025-11-28", "13:00"), ("2025-12-01", "16:00")]
+    cal = pd.DataFrame([{"date": pd.Timestamp(d).date(),
+                         "open": pd.Timestamp(f"{d} 09:30", tz=TZ).tz_convert("UTC"),
+                         "close": pd.Timestamp(f"{d} {c}", tz=TZ).tz_convert("UTC")} for d, c in days])
+    bars = {"AAPL": Bars(_bars(cal, 5), cal)}
+    ev = pd.DataFrame({"event_id": ["fri_morning", "fri_after_close", "sat"], "ticker": "AAPL",
+                       "ts": pd.to_datetime(["2025-11-28 10:00", "2025-11-28 14:30", "2025-11-29 12:00"])
+                       .tz_localize(TZ).tz_convert("UTC")})
+    out = align_events(ev, bars, cal)
+    out["sample"] = assign_sample(out)
+    tag = out.drop_duplicates("event_id").set_index("event_id")["sample"]
+    assert tag["fri_morning"] == "in"
+    assert tag["fri_after_close"] == "oos" and tag["sat"] == "oos"
+    # the tag is per event, identical across latency variants
+    assert out.groupby("event_id")["sample"].nunique().max() == 1

@@ -28,7 +28,7 @@ def embed(texts):
 def main():
     ev = pd.read_parquet(C.INTERIM / "events.parquet")
     ret = pd.read_parquet(C.INTERIM / "returns.parquet")
-    ret = ret[ret["delay_s"] == C.ENTRY_DELAY_S][["event_id", "entry_date", TARGET]]
+    ret = ret[ret["delay_s"] == C.ENTRY_DELAY_S][["event_id", "entry_date", "sample", TARGET]]
 
     heads = ev["headline"].drop_duplicates().tolist()
     E = embed(heads)

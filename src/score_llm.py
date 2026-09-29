@@ -147,7 +147,7 @@ def load_events(window):
     others = ev.groupby("id")["ticker"].agg(list)
     ev["others"] = [[t for t in others[i] if t != tk] for i, tk in zip(ev["id"], ev["ticker"])]
     if window != "all":
-        ev = ev[ev["sample"] == window]
+        ev = ev[ev["headline_window"] == window]
     return ev
 
 

@@ -131,7 +131,7 @@ def build_values():
     V["table_bt"] = md_table(pd.DataFrame(rows), ["model", "exit", "n_trades", "hit_rate", "gross_bps", "net_bps",
                                                   "sharpe_trade_gross", "sharpe_trade_net", "sharpe_daily_net", "max_drawdown_net"],
                              ["Model", "Exit", "Trades", "Hit", "Gross bps", "Net bps", "Sharpe gross", "Sharpe net",
-                              "Daily SR net", "Max DD"],
+                              "Daily SR net", "Max DD (additive)"],
                              [str, str, lambda x: f"{int(x):,}", pct, num, num, num, num, num, pct])
 
     lat = lat.assign(model_l=lat["model"].map(C.MODEL_SHORT), delay=lat["delay_s"].map(lambda s: f"{s}s"))

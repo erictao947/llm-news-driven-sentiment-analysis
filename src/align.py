@@ -90,7 +90,7 @@ class Bars:
 def _market_leg(mkt, entry_ns, s, horizon):
     """SPY return over the same window: open of first SPY bar at/after entry, close at the matching exit."""
     k = np.searchsorted(mkt.t, entry_ns, side="left")
-    if k >= len(mkt.t) or mkt.sess[k] != s or mkt.t[k] - entry_ns > 5 * NS_MIN:
+    if k >= len(mkt.t) or mkt.sess[k] != s or mkt.t[k] - entry_ns > C.MAX_ENTRY_STALENESS_MIN * NS_MIN:
         return np.nan
     j = mkt.exit_index(k, s, horizon)
     if j < k:
@@ -137,6 +137,17 @@ def align_events(events, bars_by_symbol, cal, delays=C.LATENCY_GRID_S):
     return out
 
 
+def assign_sample(ret):
+    """In-sample vs OOS by the realized entry date at the primary delay, fixed per event across all delays.
+
+    Keying on the headline date would leak: a Friday-evening headline on the last in-sample weekend enters on the
+    first OOS session, so its forward return is OOS market data."""
+    prim = ret[ret["delay_s"] == C.ENTRY_DELAY_S].set_index("event_id")["entry_date"]
+    in_sample = prim.map(lambda d: str(d) <= C.INSAMPLE_END)
+    s = ret["event_id"].map(in_sample)
+    return s.map({True: "in", False: "oos"})  # NaN when the event has no entry at the primary delay
+
+
 def load_bars(symbols, cal):
     out = {}
     for sym in symbols:
@@ -151,6 +162,7 @@ def main():
     events = pd.read_parquet(C.INTERIM / "events.parquet")
     bars = load_bars(C.UNIVERSE + [C.MARKET], cal)
     ret = align_events(events, bars, cal)
+    ret["sample"] = assign_sample(ret)
     ret.to_parquet(C.INTERIM / "returns.parquet", index=False)
     prim = ret[ret["delay_s"] == C.ENTRY_DELAY_S]
     print(f"aligned {prim['event_id'].nunique():,} of {len(events):,} events at {C.ENTRY_DELAY_S}s delay; "
