@@ -19,6 +19,7 @@ import datetime as dt
 import json
 import math
 import os
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import requests
@@ -33,7 +34,7 @@ NEWS_WS = "wss://stream.data.alpaca.markets/v1beta1/news"
 PAPER = "https://paper-api.alpaca.markets"
 DATA = "https://data.alpaca.markets"
 ET = ZoneInfo(C.TZ)
-LOG_DIR = C.ROOT / "live" / "logs"
+LOG_DIR = Path(os.getenv("LIVE_LOG_DIR", C.ROOT / "live" / "logs"))
 HOLD = dt.timedelta(minutes=C.INTRADAY_HORIZONS[C.PRIMARY_EXIT])
 
 if os.getenv("ALPACA_BASE_URL") and "paper-api" not in os.getenv("ALPACA_BASE_URL"):
