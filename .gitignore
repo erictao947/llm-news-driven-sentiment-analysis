@@ -11,5 +11,5 @@ data/sample/*
 .DS_Store
 reports/pg-*.png
 .pytest_cache/
-logs/
+/logs/
 .claude/
