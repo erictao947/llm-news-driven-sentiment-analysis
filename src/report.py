@@ -329,8 +329,27 @@ def pdf():
 
 
 def readme(V):
+    cal = pd.read_parquet(C.RAW / "calendar.parquet")
+    n_sessions = int((cal["date"].astype(str) <= C.END).sum())
+    n_bars = sum(len(pd.read_parquet(f, columns=["ts"])) for f in (C.RAW / "bars_1min").glob("*.parquet"))
+    bt = pd.read_csv(T / "backtest_summary.csv")
+    r5 = lambda m: bt[(bt["model"] == m) & (bt["exit"] == "5m") & (bt["delay_s"] == C.ENTRY_DELAY_S)].iloc[0]
+    llm5, fb5 = r5("llm"), r5("finbert")
     block = "\n".join([
         "<!-- results:start -->",
+        "## Highlights",
+        "",
+        f"- LLM pipeline (Claude Haiku 4.5) turning {int(int(V['events'].replace(',', '')) / n_sessions)}+ news headlines per trading day "
+        f"into trading signals across {len(C.UNIVERSE)} S&P 500 stocks.",
+        f"- Ingestion of {V['articles']} news articles and {int(n_bars / 1e5) / 10:.1f}M+ minute bars through REST APIs, with unit tests ruling out lookahead bias.",
+        f"- Out-of-sample backtest (Dec 2025 to Aug 2026, 5-minute exit): {int(llm5['n_trades']):,} trades, "
+        f"{llm5['gross_bps']:.1f} bps gross edge per trade (95% CI {llm5['gross_bps_ci_lo']:+.1f} to {llm5['gross_bps_ci_hi']:+.1f}), "
+        f"{llm5['hit_rate']:.0%} hit rate, {llm5['gross_bps'] / fb5['gross_bps']:.0f}x the FinBERT baseline ({fb5['gross_bps']:.1f} bps).",
+        f"- Net of modeled costs ({llm5['cost_bps']:.1f} bps round trip, 5 bps/side plus a conservative spread proxy) the edge is "
+        f"{llm5['net_bps']:+.1f} bps per trade. The writeup covers why, and what would change it.",
+        "",
+        "## Full results (30-minute primary exit)",
+        "",
         "![IC by horizon](reports/figures/ic_decay.png)",
         "",
         f"- **Sample:** {V['events']} headline-ticker events, {V['oos_events']} out of sample over {V['oos_days']} trading days.",

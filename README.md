@@ -1,10 +1,19 @@
-# LLM News Sentiment Signal Study
+# LLM News-Driven Sentiment Analysis
 
 Does LLM-scored sentiment on real-time equity headlines predict forward returns? How fast does the signal decay, and does anything survive transaction costs?
 
 Claude Haiku 4.5 scores Benzinga headlines for 30 S&P 500 large caps (Sep 2025 to Aug 2026). FinBERT, an embedding + logistic-regression model and a random-sign control score the same headlines. The prompt and all parameters are frozen on Sep to Nov 2025; **every reported number is out of sample (Dec 2025 to Aug 2026).**
 
 <!-- results:start -->
+## Highlights
+
+- LLM pipeline (Claude Haiku 4.5) turning 164+ news headlines per trading day into trading signals across 30 S&P 500 stocks.
+- Ingestion of 26,899 news articles and 2.7M+ minute bars through REST APIs, with unit tests ruling out lookahead bias.
+- Out-of-sample backtest (Dec 2025 to Aug 2026, 5-minute exit): 853 trades, 14.4 bps gross edge per trade (95% CI +2.7 to +27.3), 53% hit rate, 6x the FinBERT baseline (2.3 bps).
+- Net of modeled costs (18.4 bps round trip, 5 bps/side plus a conservative spread proxy) the edge is -3.9 bps per trade. The writeup covers why, and what would change it.
+
+## Full results (30-minute primary exit)
+
 ![IC by horizon](reports/figures/ic_decay.png)
 
 - **Sample:** 41,286 headline-ticker events, 30,792 out of sample over 189 trading days.
