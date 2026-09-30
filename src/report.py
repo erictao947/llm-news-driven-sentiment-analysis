@@ -283,8 +283,37 @@ def build_values():
     return V
 
 
+def live_summary():
+    """Summarize live/logs/*.jsonl. Preflight files (name contains 'preflight') are labeled as such."""
+    rows = []
+    for f in sorted((C.ROOT / "live" / "logs").glob("*.jsonl")):
+        L = pd.DataFrame([json.loads(x) for x in f.read_text().splitlines() if x.strip()])
+        if L.empty:
+            continue
+        sc = L[L["decision"] != "exit"]
+        t = lambda c: pd.to_datetime(sc[c], utc=True, format="ISO8601")
+        rows.append({"session": f.stem.replace("_preflight", " (preflight, pre-market, dry run)"),
+                     "scored": len(sc),
+                     "rule_hits": int(((sc["sentiment"].abs() >= C.SENT_THRESHOLD) & (sc["confidence"] >= C.CONF_THRESHOLD)).sum()),
+                     "orders": int(sc["decision"].isin(["order_submitted", "dry_run_order"]).sum()),
+                     "exits": int((L["decision"] == "exit").sum()),
+                     "feed_s": (t("received_at") - t("created_at")).dt.total_seconds().median(),
+                     "score_s": (t("scored_at") - t("received_at")).dt.total_seconds().median(),
+                     "total_s": sc["latency_s"].median()})
+    if not rows:
+        return "No live session has been logged yet."
+    df = pd.DataFrame(rows)
+    sec = lambda x: f"{x:.1f} s"
+    table = md_table(df, ["session", "scored", "rule_hits", "orders", "exits", "feed_s", "score_s", "total_s"],
+                     ["Session", "Headline-tickers scored", "Rule hits", "Paper orders", "Exits",
+                      "Median feed delay", "Median scoring time", "Median headline to decision"],
+                     [str, str, str, str, str, sec, sec, sec])
+    return table
+
+
 def render(V):
     tpl = (C.REPORTS / "writeup_template.md").read_text().replace("{{post_run_notes}}", V["post_run_notes"])
+    V.setdefault("live_section", live_summary())
     missing = sorted(set(re.findall(r"\{\{(\w+)\}\}", tpl)) - set(V))
     if missing:
         raise SystemExit(f"unresolved placeholders: {missing}")

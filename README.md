@@ -18,6 +18,8 @@ Claude Haiku 4.5 scores Benzinga headlines for 30 S&P 500 large caps (Sep 2025 t
 
 Full writeup: [`reports/writeup.pdf`](reports/writeup.pdf).
 
+![Streamlit dashboard](reports/figures/dashboard.png)
+
 ## How to run
 
 ```bash

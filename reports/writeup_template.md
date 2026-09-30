@@ -108,6 +108,16 @@ Does the LLM's own confidence sort the signal?
 
 {{post_run_notes}}
 
+# Live demo
+
+`live/stream.py` subscribes to the Alpaca news websocket, scores each headline with the same frozen prompt (one call per headline), applies the same trade rule, and sends market orders to an Alpaca **paper** account, exiting after 30 minutes. It is a demonstration that the pipeline runs in real time, not a source of results. Logs are in `live/logs/`.
+
+{{live_section}}
+
+The feed delay is Benzinga's timestamp to arrival on the websocket; scoring time is the LLM round trip. Both matter against the latency table above: a decision lands a couple of seconds after the headline, well inside the 60-second delay the backtest assumes.
+
+![Streamlit dashboard, signal-decay tab.](figures/dashboard.png){width=60%}
+
 # Limitations
 
 - **Spread proxy.** Minute-bar high minus low mixes price movement with the spread, so it overstates the quoted spread of these megacaps, most of all in the volatile minutes after news. Costs here are conservative on spread and ignore market impact.

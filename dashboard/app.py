@@ -52,7 +52,7 @@ with tab1:
         pick = st.multiselect("Models", list(COLOR), default=list(COLOR))
         d = ic[ic["Model"].isin(pick)]
         order = [HORIZON_LABEL[h] for h in C.HORIZONS]
-        base = alt.Chart(d).encode(x=alt.X("Horizon:N", sort=order), color=alt.Color("Model:N", scale=SCALE))
+        base = alt.Chart(d).encode(x=alt.X("Horizon:N", sort=order, axis=alt.Axis(labelAngle=0)), color=alt.Color("Model:N", scale=SCALE))
         tip = ["Model", "Horizon", alt.Tooltip("ic:Q", format="+.3f"), alt.Tooltip("ci_lo:Q", format="+.3f"),
                alt.Tooltip("ci_hi:Q", format="+.3f"), "n:Q", alt.Tooltip("hit_rate:Q", format=".1%")]
         chart = (base.mark_line(strokeWidth=2) + base.mark_point(size=60, filled=True).encode(y="ic:Q", tooltip=tip)

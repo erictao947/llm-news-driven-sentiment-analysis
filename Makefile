@@ -47,3 +47,8 @@ live:
 	$(PY) -m live.stream
 
 all: data score eval backtest report
+
+live-finish:              ## after a live session: re-render the writeup with the session log and commit it
+	$(PY) -m src.report
+	git add live/logs reports README.md
+	git commit -m "Add live paper-trading session log to writeup"

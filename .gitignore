@@ -12,3 +12,4 @@ data/sample/*
 reports/pg-*.png
 .pytest_cache/
 logs/
+.claude/

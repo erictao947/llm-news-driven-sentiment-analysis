@@ -178,6 +178,18 @@ Does the LLM's own confidence sort the signal?
 - **One-at-a-time LLM scoring was needlessly expensive.** Re-sending the 5,000-token prompt for every headline cost about $0.87 per 1,000 events. Batching 20 headlines per request through the Batches API brought that to $0.10.
 - **Deduplication barely mattered.** The near-duplicate filter removed only 48 headlines; Benzinga already deduplicates its feed.
 
+# Live demo
+
+`live/stream.py` subscribes to the Alpaca news websocket, scores each headline with the same frozen prompt (one call per headline), applies the same trade rule, and sends market orders to an Alpaca **paper** account, exiting after 30 minutes. It is a demonstration that the pipeline runs in real time, not a source of results. Logs are in `live/logs/`.
+
+| Session | Headline-tickers scored | Rule hits | Paper orders | Exits | Median feed delay | Median scoring time | Median headline to decision |
+|---------------------------------------------|-------------------------:|-----------:|--------------:|-------:|-------------------:|---------------------:|-----------------------------:|
+| 2026-09-30 (preflight, pre-market, dry run) | 1 | 1 | 0 | 0 | 0.2 s | 2.0 s | 2.2 s |
+
+The feed delay is Benzinga's timestamp to arrival on the websocket; scoring time is the LLM round trip. Both matter against the latency table above: a decision lands a couple of seconds after the headline, well inside the 60-second delay the backtest assumes.
+
+![Streamlit dashboard, signal-decay tab.](figures/dashboard.png){width=60%}
+
 # Limitations
 
 - **Spread proxy.** Minute-bar high minus low mixes price movement with the spread, so it overstates the quoted spread of these megacaps, most of all in the volatile minutes after news. Costs here are conservative on spread and ignore market impact.
