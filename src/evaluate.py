@@ -120,7 +120,29 @@ def ic_by_group(df, group_col, horizon=C.PRIMARY_EXIT, reps=500, min_n=100):
     return pd.DataFrame(rows)
 
 
+def ic_by_delay(horizons=("5m", "15m", "30m"), reps=1000):
+    """Latency decay on headlines that arrive during regular hours. Off-hours headlines enter at the next open
+    whatever the delay, so pooling them in would hide the effect of speed."""
+    rows = []
+    for d in C.LATENCY_GRID_S:
+        df = load_panel(delay=d)
+        df = df[df["headline_in_rth"]]
+        for h in horizons:
+            col = f"xret_{h}"
+            sub = df.dropna(subset=[col])
+            fns = {m: (lambda f, m=m, col=col: spearman(f[f"score_{m}"], f[col])) for m in C.MODELS}
+            boot = day_bootstrap(sub, fns, reps=reps)
+            for m in C.MODELS:
+                lo, hi = ci(boot[m])
+                rows.append({"delay_s": d, "horizon": h, "model": m, "n": len(sub),
+                             "ic": spearman(sub[f"score_{m}"], sub[col]), "ci_lo": lo, "ci_hi": hi})
+    out = pd.DataFrame(rows)
+    out.to_csv(C.TABLES / "ic_by_delay_rth.csv", index=False)
+    return out
+
+
 def main():
+    ic_by_delay()
     df = load_panel()
     print(f"OOS panel: {len(df):,} events over {df['entry_date'].nunique()} trading days")
     ic, diff = ic_by_horizon(df)

@@ -23,6 +23,7 @@ import datetime as dt
 import json
 import time
 
+import anthropic
 import numpy as np
 import pandas as pd
 
@@ -111,7 +112,12 @@ def collect(batch_id, poll_s=30):
     client = make_client()
     info = next(r for r in map(json.loads, open(BATCH_LOG)) if r["batch_id"] == batch_id)
     while True:
-        b = client.messages.batches.retrieve(batch_id)
+        try:
+            b = client.messages.batches.retrieve(batch_id)
+        except anthropic.APIConnectionError as e:  # includes timeouts; the batch keeps running server-side
+            print(f"  poll failed ({type(e).__name__}), retrying")
+            time.sleep(poll_s)
+            continue
         if b.processing_status == "ended":
             break
         c = b.request_counts

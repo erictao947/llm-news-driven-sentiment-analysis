@@ -1,0 +1,2 @@
+n,sentiment_spearman,sentiment_pearson,confidence_spearman,category_agreement,sign_agreement_nonzero,mean_abs_sentiment_diff,trade_flag_agreement,trade_rate_single,trade_rate_batch
+1486,0.7778692913867724,0.8271639159734572,0.878159960749971,0.8835800807537012,0.9239130434782609,0.04700538358008075,0.9804845222072678,0.020188425302826378,0.02220726783310902

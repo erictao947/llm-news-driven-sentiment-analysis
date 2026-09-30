@@ -2,3 +2,5 @@ run_at,window,model,prompt_version,input,cache_write,cache_read,output,calls,err
 2026-09-29T21:32:47+00:00,in,claude-haiku-4-5,v1,2502,5287,259063,1654,50,0,0.0433
 2026-09-29T21:33:12+00:00,in,claude-haiku-4-5,v2,2502,5351,262199,1656,50,0,0.0437
 2026-09-29T21:45:00+00:00,all-interrupted(estimated),claude-haiku-4-5,v2,0,0,0,0,1436,0,1.2493
+2026-09-29T21:53:49+00:00,validate,claude-haiku-4-5,v2-batch20,82743,156426,248124,55776,75,0,0.291
+2026-09-30T01:53:18+00:00,full,claude-haiku-4-5,v2-batch20,2189494,5394,10728666,1488906,1990,0,5.3568

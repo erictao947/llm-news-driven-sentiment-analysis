@@ -5,7 +5,15 @@ Does LLM-scored sentiment on real-time equity headlines predict forward returns?
 Claude Haiku 4.5 scores Benzinga headlines for 30 S&P 500 large caps (Sep 2025 to Aug 2026). FinBERT, an embedding + logistic-regression model and a random-sign control score the same headlines. The prompt and all parameters are frozen on Sep to Nov 2025; **every reported number is out of sample (Dec 2025 to Aug 2026).**
 
 <!-- results:start -->
-_Results appear here after `make all`._
+![IC by horizon](reports/figures/ic_decay.png)
+
+- **Sample:** 41,286 headline-ticker events, 30,792 out of sample over 189 trading days.
+- **Decay:** LLM rank IC +0.013 at 5 min, +0.006 at 30 min [-0.013, +0.024], +0.007 by the close.
+- **vs FinBERT at 30 min:** IC difference +0.007, 95% CI [-0.007, +0.022].
+- **Backtest (30-min exit, 60 s delay):** 839 trades, +6.11 bps gross per trade (95% CI [-8.8, +20.0]), -12.24 bps net after 18.35 bps of costs; Sharpe +1.50 gross, -2.99 net.
+- **Latency (regular-hours headlines, 30-min IC):** +0.023 at 0 s, +0.021 at 60 s, +0.018 at 300 s, +0.011 at 900 s.
+- **Verdict:** The signal first, then costs. At the 30-minute exit the gross edge is +6.1 bps per trade with a 95% CI of [-8.8, +20.0], so it cannot be told apart from zero. Costs then remove any doubt: 18.3 bps per round trip (10 bps of fees, 8.3 bps of estimated spread), and even with zero fees the net edge is -2.2 bps.
+- **LLM API spend:** $6.98 for all 41,286 events (Claude Haiku 4.5, Batches API).
 <!-- results:end -->
 
 Full writeup: [`reports/writeup.pdf`](reports/writeup.pdf).

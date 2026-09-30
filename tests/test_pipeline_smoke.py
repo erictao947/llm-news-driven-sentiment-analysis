@@ -73,7 +73,14 @@ def test_full_pipeline(sandbox):
         "articles": 3000, "articles_in_universe": 3000, "ticker_headlines_raw": 3000, "dropped_near_duplicates": 0,
         "events": 3000, "events_insample": int((ev["headline_window"] == "in").sum()),
         "events_oos": int((ev["headline_window"] == "oos").sum()), "multi_ticker_share": 0.0}))
-    pd.DataFrame([{"est_usd": 1.0, "calls": 3000}]).to_csv(C.REPORTS / "llm_cost_log.csv", index=False)
+    pd.DataFrame([{"window": "in", "prompt_version": C.PROMPT_VERSION, "est_usd": 0.1, "calls": 100},
+                  {"window": "full", "prompt_version": f"{C.PROMPT_VERSION}-batch20", "est_usd": 1.0, "calls": 150}]
+                 ).to_csv(C.REPORTS / "llm_cost_log.csv", index=False)
+    (C.CACHE / f"llm_{C.PROMPT_VERSION}_batch.jsonl").write_text("{}\n" * 3000)
+    pd.DataFrame([{"n": 100, "sentiment_spearman": 0.8, "sentiment_pearson": 0.8, "confidence_spearman": 0.8,
+                   "category_agreement": 0.9, "sign_agreement_nonzero": 0.9, "mean_abs_sentiment_diff": 0.05,
+                   "trade_flag_agreement": 0.98, "trade_rate_single": 0.02, "trade_rate_batch": 0.02}]
+                 ).to_csv(C.TABLES / "llm_batch_vs_single.csv", index=False)
     (C.REPORTS / "notes_post_run.md").write_text("Synthetic run.")
     tpl = (C.ROOT / "reports" / "writeup_template.md").read_text()
     (C.REPORTS / "writeup_template.md").write_text(tpl)

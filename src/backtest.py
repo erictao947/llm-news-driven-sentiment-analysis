@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 
 from src import config as C
-from src.evaluate import load_panel
+from src.evaluate import ci, day_bootstrap, load_panel
 
 
 # ---------------------------------------------------------------- selection
@@ -98,6 +98,9 @@ def summarize(trades, all_days, label):
         dsd = daily[k].std()
         out[f"sharpe_daily_{k}"] = daily[k].mean() / dsd * np.sqrt(252) if dsd > 0 else np.nan
         out[f"total_return_{k}"] = daily[k].sum()
+    if n > 10:  # 95% CI on mean gross edge per trade, resampling trading days
+        b = day_bootstrap(trades, {"g": lambda f: f["gross"].mean() * 1e4}, reps=1000)["g"]
+        out["gross_bps_ci_lo"], out["gross_bps_ci_hi"] = ci(b)
     out["max_drawdown_net"] = dd
     out["turnover_per_day"] = 2 * n * w / len(all_days)  # notional traded per day as a multiple of capital
     return out, daily.assign(**label).reset_index(names="date")
@@ -134,6 +137,20 @@ def main():
             s, c = summarize(t, all_days, {"model": model, "exit": C.PRIMARY_EXIT, "delay_s": delay})
             summary.append(s)
             curves.append(c)
+
+    rth_rows = []  # latency sweep on headlines that arrive during regular hours only
+    for model in C.MODELS:
+        for delay in C.LATENCY_GRID_S:
+            pan = panels[delay][panels[delay]["headline_in_rth"]]
+            t = run(pan, model, th, C.PRIMARY_EXIT)
+            s, _ = summarize(t, all_days, {"model": model, "exit": C.PRIMARY_EXIT, "delay_s": delay, "subset": "rth"})
+            rth_rows.append(s)
+        for delay in C.LATENCY_GRID_S:
+            pan = panels[delay][panels[delay]["headline_in_rth"]]
+            t = run(pan, model, th, "5m")
+            s, _ = summarize(t, all_days, {"model": model, "exit": "5m", "delay_s": delay, "subset": "rth"})
+            rth_rows.append(s)
+    pd.DataFrame(rth_rows).to_csv(C.TABLES / "backtest_latency_rth.csv", index=False)
 
     fee_rows = []
     for fee in (0.0, 1.0, 2.5, 5.0, 10.0):

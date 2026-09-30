@@ -1,0 +1,17 @@
+{
+  "oos_events": 30792,
+  "oos_days": 189,
+  "oos_events_rth": 13992,
+  "insample_events": 10478,
+  "category_counts": {
+    "other": 18614,
+    "product": 4884,
+    "analyst_rating": 2241,
+    "legal_regulatory": 1730,
+    "macro": 1377,
+    "management": 796,
+    "earnings": 642,
+    "m_and_a": 296,
+    "guidance": 212
+  }
+}

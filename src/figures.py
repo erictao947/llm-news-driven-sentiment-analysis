@@ -53,7 +53,7 @@ def ic_decay():
 def equity():
     eq = pd.read_parquet(C.INTERIM / "equity_curves.parquet")
     eq = eq[(eq["exit"] == C.PRIMARY_EXIT) & (eq["delay_s"] == C.ENTRY_DELAY_S)]
-    fig, ax = plt.subplots(figsize=(6.5, 3.4))
+    fig, ax = plt.subplots(figsize=(6.5, 3.8))
     ax.axhline(0, color=MUTED, lw=0.8)
     for m in C.MODELS:
         d = eq[eq["model"] == m].sort_values("date")
@@ -63,7 +63,7 @@ def equity():
             ax.plot(dates, d["gross"].cumsum() * 100, color=COLOR[m], lw=1.2, ls=":", label="Claude Haiku 4.5, gross")
     ax.set_ylabel("Cumulative return, % of capital")
     ax.set_title("Backtest equity, 30-min exit, 60 s entry delay, net of costs", loc="left")
-    ax.legend(fontsize=8, loc="upper left")
+    ax.legend(fontsize=8, ncol=3, loc="upper center", bbox_to_anchor=(0.5, -0.18))
     fig.autofmt_xdate()
     fig.tight_layout()
     fig.savefig(C.FIGURES / "equity_curves.png")
@@ -71,20 +71,28 @@ def equity():
 
 
 def latency():
-    lat = pd.read_csv(C.TABLES / "backtest_latency.csv")
+    ic = pd.read_csv(C.TABLES / "ic_by_delay_rth.csv")
+    ic = ic[ic["horizon"] == C.PRIMARY_EXIT]
+    bt = pd.read_csv(C.TABLES / "backtest_latency_rth.csv")
+    bt = bt[bt["exit"] == C.PRIMARY_EXIT]
     fig, axes = plt.subplots(1, 2, figsize=(6.5, 3.3))
-    for ax, col, title in ((axes[0], "gross_bps", "Gross edge per trade (bps)"),
-                           (axes[1], "net_bps", "Net edge per trade (bps)")):
+    x = np.arange(len(C.LATENCY_GRID_S))
+    off = dict(zip(C.MODELS, np.linspace(-0.12, 0.12, len(C.MODELS))))
+    for m in C.MODELS:
+        d = ic[ic["model"] == m].set_index("delay_s").loc[C.LATENCY_GRID_S]
+        axes[0].plot(x + off[m], d["ic"], marker="o", ms=5, **_style_line(m))
+        axes[0].vlines(x + off[m], d["ci_lo"], d["ci_hi"], color=COLOR[m], lw=1.2, alpha=0.7)
+        b = bt[bt["model"] == m].set_index("delay_s").loc[C.LATENCY_GRID_S]
+        axes[1].plot(x + off[m], b["gross_bps"], marker="o", ms=5, **_style_line(m))
+        axes[1].vlines(x + off[m], b["gross_bps_ci_lo"], b["gross_bps_ci_hi"], color=COLOR[m], lw=1.2, alpha=0.7)
+    for ax, t in ((axes[0], "IC at 30 min"), (axes[1], "Gross edge, bps per trade")):
         ax.axhline(0, color=MUTED, lw=0.8)
-        for m in C.MODELS:
-            d = lat[lat["model"] == m].sort_values("delay_s")
-            ax.plot(d["delay_s"], d[col], marker="o", ms=5, **_style_line(m))
-        ax.set_xscale("symlog", linthresh=60)
-        ax.set_xticks(C.LATENCY_GRID_S, [f"{s}s" for s in C.LATENCY_GRID_S])
-        ax.set_title(title, loc="left")
+        ax.set_xticks(x, [f"{s}s" for s in C.LATENCY_GRID_S])
         ax.set_xlabel("Entry delay after headline")
+        ax.set_title(t, loc="left")
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, ncol=4, loc="lower center", fontsize=8)
+    fig.suptitle("Latency, regular-hours headlines only", x=0.02, ha="left", fontsize=10, fontweight="bold")
     fig.tight_layout(rect=(0, 0.08, 1, 1))
     fig.savefig(C.FIGURES / "latency.png")
     plt.close(fig)
@@ -130,9 +138,9 @@ def cost_bridge():
             va="bottom" if level >= 0 else "top", color=INK, fontsize=8)
     ax.axhline(0, color=MUTED, lw=0.8)
     ax.set_xticks(range(len(steps) + 1), [l for l, _ in steps] + ["Net edge"], fontsize=8)
-    ax.margins(y=0.18)
+    ax.margins(y=0.25)
     ax.set_ylabel("bps per trade")
-    ax.set_title("Where the LLM edge goes: 30-min exit, 60 s delay", loc="left")
+    ax.set_title("Where the LLM edge goes: 30-min exit, 60 s delay", loc="left", pad=14)
     fig.tight_layout()
     fig.savefig(C.FIGURES / "cost_bridge.png")
     plt.close(fig)
